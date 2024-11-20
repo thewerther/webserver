@@ -6,7 +6,7 @@ import (
   "html/template"
 )
 
-func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
+func (cfg *ApiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
     cfg.FileServerHits.Add(1)
     fmt.Println("incremented FileServerHits now:", cfg.FileServerHits.Load())
@@ -14,7 +14,7 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
   })
 }
 
-func (cfg *apiConfig) serveAdminMetrics(w http.ResponseWriter, req *http.Request) {
+func (cfg *ApiConfig) serveAdminMetrics(w http.ResponseWriter, req *http.Request) {
   const tpl = `<html>
 
 <body>

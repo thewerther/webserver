@@ -20,7 +20,7 @@ VALUES (
   $1,
   $2
 )
-RETURNING id, email, created_at, updated_at, hashed_password
+RETURNING id, email, created_at, updated_at, hashed_password, is_premium
 `
 
 type CreateUserParams struct {
@@ -37,12 +37,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.HashedPassword,
+		&i.IsPremium,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, created_at, updated_at, hashed_password FROM users
+SELECT id, email, created_at, updated_at, hashed_password, is_premium FROM users
 WHERE email = $1
 `
 
@@ -55,17 +56,18 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.HashedPassword,
+		&i.IsPremium,
 	)
 	return i, err
 }
 
-const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, created_at, updated_at, hashed_password FROM users
+const getUserById = `-- name: GetUserById :one
+SELECT id, email, created_at, updated_at, hashed_password, is_premium FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -73,6 +75,45 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.HashedPassword,
+		&i.IsPremium,
+	)
+	return i, err
+}
+
+const setUserPremium = `-- name: SetUserPremium :exec
+UPDATE users
+SET is_premium = true
+WHERE id = $1
+`
+
+func (q *Queries) SetUserPremium(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, setUserPremium, id)
+	return err
+}
+
+const updateUserCredentialsById = `-- name: UpdateUserCredentialsById :one
+UPDATE users
+SET email = $2, hashed_password = $3, updated_at = NOW()
+WHERE id = $1
+RETURNING id, email, created_at, updated_at, hashed_password, is_premium
+`
+
+type UpdateUserCredentialsByIdParams struct {
+	ID             uuid.UUID `json:"id"`
+	Email          string    `json:"email"`
+	HashedPassword string    `json:"hashed_password"`
+}
+
+func (q *Queries) UpdateUserCredentialsById(ctx context.Context, arg UpdateUserCredentialsByIdParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserCredentialsById, arg.ID, arg.Email, arg.HashedPassword)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.HashedPassword,
+		&i.IsPremium,
 	)
 	return i, err
 }

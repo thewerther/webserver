@@ -13,6 +13,17 @@ RETURNING *;
 SELECT * FROM users
 WHERE email = $1;
 
--- name: GetUserByID :one
+-- name: GetUserById :one
 SELECT * FROM users
+WHERE id = $1;
+
+-- name: UpdateUserCredentialsById :one
+UPDATE users
+SET email = $2, hashed_password = $3, updated_at = NOW()
+WHERE id = $1
+RETURNING *;
+
+-- name: SetUserPremium :exec
+UPDATE users
+SET is_premium = true
 WHERE id = $1;

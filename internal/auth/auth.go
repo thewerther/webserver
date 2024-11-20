@@ -69,7 +69,7 @@ func GetBearerToken(headers http.Header) (string, error) {
   }
 
   authToken := strings.TrimPrefix(headerAuth, "Bearer ")
-  // No "Bearer " prefix
+  // No "Bearer " prefix, string remains unchanged after triming
   if authToken == headerAuth {
     return "", errors.New("Wrong auth token request header format!")
   }
@@ -89,4 +89,18 @@ func MakeRefreshToken() (string, error) {
   token := hex.EncodeToString(bytes)
 
   return token, nil
+}
+
+func GetAPIKey(headers http.Header) (string, error) {
+  headerAuth := headers.Get("Authorization")
+  if headerAuth == "" {
+    return "", errors.New("No \"Authorization\" header in request!")
+  }
+
+  authAPIKey := strings.TrimPrefix(headerAuth, "ApiKey ")
+  if authAPIKey == headerAuth {
+    return "", errors.New("Wrong api key request header format!")
+  }
+
+   return authAPIKey, nil
 }
